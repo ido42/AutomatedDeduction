@@ -19,6 +19,17 @@ tff(foodlink_definition, axiom,
       (eats(A, B) <=> ? [F: foodlink] : ((eaten(F) = B) & (eater(F) = A)))
     ).
 
+tff(primary_producer_definition, axiom,
+    ! [P: species]:
+    (is_primary_producer(P) <=> ~ (? [S: species]: eats(P, S)))).
+
+%----1.
+% tff(primary_producer_no_foodlink, conjecture,
+%     ! [S: species] : 
+%       (is_primary_producer(S) => ~ ? [F: foodlink] : (eater(F) = S))
+%     ).
+
+
 %---- every species has at least one foodlink, i.e. consumer or producer
 tff(no_isolated_species, axiom,
     ![S:species]:
@@ -30,16 +41,6 @@ tff(no_isolated_species, axiom,
 tff(no_canibalism, axiom,
     ! [S: species]:
     ~ eats(S, S)).
-
-tff(primary_producer_definition, axiom,
-    ! [P: species]:
-    (is_primary_producer(P) <=> ~ (? [S: species]: eats(P, S)))).
-
-%----1.
-% tff(primary_producer_no_foodlink, conjecture,
-%     ! [S: species] : 
-%       (is_primary_producer(S) => ~ ? [F: foodlink] : (eater(F) = S))
-%     ).
 
 %----2.
 % tff(every_primary_producer_eaten, conjecture,
@@ -75,7 +76,7 @@ tff(apex_predator_definition, axiom,
 %     ((~ is_apex_predator(S)) =>  ? [P: species]: eats(P, S))
 %     ).
 
-tff(food_chain_initial_or_recursive_axiom, axiom,
+tff(food_chain_def_axiom, axiom,
     ! [A: species]:
     ! [B: species]:
     (food_chain_exists(A, B) => 
@@ -101,10 +102,10 @@ tff(food_chains_reach_up,axiom,
           ( is_apex_predator(Z)
           & food_chain_exists(Y,Z) ) ) ).
 
-% tff(food_chain_inital_axiom, axiom,
-%     ! [A: species]:
-%     ! [B: species]:
-%     ((? [F: foodlink]: (eater(F) = B & eaten(F) = A)) => food_chain_exists(A, B))).
+tff(food_chain_inital_axiom, axiom,
+    ! [A: species]:
+    ! [B: species]:
+    ((? [F: foodlink]: (eater(F) = B & eaten(F) = A)) => food_chain_exists(A, B))).
 
 % tff(food_chain_recursive_axiom, axiom,
 %     ! [A: species]:
@@ -135,11 +136,11 @@ tff(complete_food_chain_axiom, axiom,
 %     ))
 %     ).
 
-%---- apex predator dependent ?
+%----dependence is only defined for the apex predator
 tff(dependent_axiom, axiom,
     ! [A: species]:
     ! [B:species]:
-    (depends_on(A, B) <=> food_chain_exists(B, A))).
+    (depends_on(A, B) <=> (is_apex_predator(A) & food_chain_exists(B, A)))).
 
 %---9. Proved
 % tff(apex_depends_on_not_apex, conjecture,
