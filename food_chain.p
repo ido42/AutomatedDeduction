@@ -76,43 +76,42 @@ tff(apex_predator_definition, axiom,
 %     ((~ is_apex_predator(S)) =>  ? [P: species]: eats(P, S))
 %     ).
 
-tff(food_chain_def_axiom, axiom,
-    ! [A: species]:
-    ! [B: species]:
-    (food_chain_exists(A, B) => 
-    (
-        eats(B, A) |
-        ? [X: species]: (eats(X, A) & food_chain_exists(X, B))
-    ))
-    ).
-
-tff(food_chains_reach_down,axiom,
-    ! [X: species,Y: species] :
-      ( ( food_chain_exists(X,Y)
-        & ~ is_primary_producer(X) )
-     => ? [W: species] :
-          ( is_primary_producer(W)
-          & food_chain_exists(W,X) ) ) ).
-
-tff(food_chains_reach_up,axiom,
-    ! [X: species,Y: species] :
-      ( ( food_chain_exists(X,Y)
-        & ~ is_apex_predator(Y) )
-     => ? [Z: species] :
-          ( is_apex_predator(Z)
-          & food_chain_exists(Y,Z) ) ) ).
-
-tff(food_chain_inital_axiom, axiom,
-    ! [A: species]:
-    ! [B: species]:
-    ((? [F: foodlink]: (eater(F) = B & eaten(F) = A)) => food_chain_exists(A, B))).
-
-% tff(food_chain_recursive_axiom, axiom,
+% tff(food_chain_def_axiom, axiom,
 %     ! [A: species]:
 %     ! [B: species]:
-%     ? [X: species]:
-%     ((food_chain_exists(A, X) & food_chain_exists(X, B)) => food_chain_exists(A, B))
+%     (food_chain_exists(A, B) => 
+%     (
+%         eats(B, A) |
+%         ? [X: species]: (eats(X, A) & food_chain_exists(X, B))
+%     ))
 %     ).
+
+% tff(food_chains_reach_down,axiom,
+%     ! [X: species,Y: species] :
+%       ( ( food_chain_exists(X,Y)
+%         & ~ is_primary_producer(X) )
+%      => ? [W: species] :
+%           ( is_primary_producer(W)
+%           & food_chain_exists(W,X) ) ) ).
+
+% tff(food_chains_reach_up,axiom,
+%     ! [X: species,Y: species] :
+%       ( ( food_chain_exists(X,Y)
+%         & ~ is_apex_predator(Y) )
+%      => ? [Z: species] :
+%           ( is_apex_predator(Z)
+%           & food_chain_exists(Y,Z) ) ) ).
+
+% tff(foodllink_food_chain_axiom, axiom,
+%     ! [L: foodlink] : food_chain_exists(eaten(L),eater(L)) ).
+
+%     % ((? [F: foodlink]: (eater(F) = B & eaten(F) = A)) => food_chain_exists(A, B))).
+
+% tff(join_food_chains,axiom,
+%     ! [X: species,Y: species,Z: species] :
+%       ( ( food_chain(X,Y)
+%         & food_chain(Y,Z) )
+%      => food_chain(X,Z) ) ).
 
 tff(complete_food_chain_axiom, axiom,
     ! [A: species]: 
@@ -125,6 +124,49 @@ tff(complete_food_chain_axiom, axiom,
 %     ! [S: species, E: species]:
 %     (complete_food_chain(S, E) => ~ eats(S, E))
 %     ).
+
+
+%----A single food link is a food chain
+tff(food_link_is_food_chain,axiom,
+    ! [L: foodlink] : food_chain_exists(eaten(L),eater(L)) ).
+
+%----Two food chains can be joined if the first ends where the second starts
+tff(join_food_chains,axiom,
+    ! [X: species,Y: species,Z: species] :
+      ( ( food_chain_exists(X,Y)
+        & food_chain_exists(Y,Z) )
+     => food_chain_exists(X,Z) ) ).
+
+%----Nothing else is a food chain: every food chain starts with a food link,
+%----which is either the whole chain or is followed by the rest of the chain
+tff(food_chain_starts_with_link,axiom,
+    ! [X: species,Z: species] :
+      ( food_chain_exists(X,Z)
+     => ( eats(Z,X)
+        | ? [Y: species] :
+            ( eats(Y,X)
+            & food_chain_exists(Y,Z) ) ) ) ).
+
+%----Food chains do not go on forever. First order logic cannot say
+%----"finite", so this is said as: a food chain that does not start at a
+%----primary producer can be extended backwards to one ...
+tff(food_chains_reach_down,axiom,
+    ! [X: species,Y: species] :
+      ( ( food_chain_exists(X,Y)
+        & ~ is_primary_producer(X) )
+     => ? [W: species] :
+          ( is_primary_producer(W)
+          & food_chain_exists(W,X) ) ) ).
+
+%----... and a food chain that does not end at an apex predator can be
+%----extended forwards to one
+tff(food_chains_reach_up,axiom,
+    ! [X: species,Y: species] :
+      ( ( food_chain_exists(X,Y)
+        & ~ is_apex_predator(Y) )
+     => ? [Z: species] :
+          ( is_apex_predator(Z)
+          & food_chain_exists(Y,Z) ) ) ).
 
 %----8. Proved
 % tff(middle_species_food_chains, conjecture,
@@ -140,12 +182,12 @@ tff(complete_food_chain_axiom, axiom,
 tff(dependent_axiom, axiom,
     ! [A: species]:
     ! [B:species]:
-    (depends_on(A, B) <=> (is_apex_predator(A) & food_chain_exists(B, A)))).
+    (depends_on(A, B) <=> ((is_apex_predator(A) & food_chain_exists(B, A))))).
 
 %---9. Proved
-% tff(apex_depends_on_not_apex, conjecture,
-%     ! [S: species]:
-%     (~is_apex_predator(S) => ? [A: species]: depends_on(A, S))).
+tff(apex_depends_on_not_apex, conjecture,
+    ! [S: species]:
+    (~is_apex_predator(S) => ? [A: species]: (depends_on(A, S) & is_apex_predator(A)))).
 
 %----10. Proved
 % tff(apex_depends_on_all_primary_producers, conjecture,
