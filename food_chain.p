@@ -76,42 +76,6 @@ tff(apex_predator_definition, axiom,
 %     ((~ is_apex_predator(S)) =>  ? [P: species]: eats(P, S))
 %     ).
 
-% tff(food_chain_def_axiom, axiom,
-%     ! [A: species]:
-%     ! [B: species]:
-%     (food_chain_exists(A, B) => 
-%     (
-%         eats(B, A) |
-%         ? [X: species]: (eats(X, A) & food_chain_exists(X, B))
-%     ))
-%     ).
-
-% tff(food_chains_reach_down,axiom,
-%     ! [X: species,Y: species] :
-%       ( ( food_chain_exists(X,Y)
-%         & ~ is_primary_producer(X) )
-%      => ? [W: species] :
-%           ( is_primary_producer(W)
-%           & food_chain_exists(W,X) ) ) ).
-
-% tff(food_chains_reach_up,axiom,
-%     ! [X: species,Y: species] :
-%       ( ( food_chain_exists(X,Y)
-%         & ~ is_apex_predator(Y) )
-%      => ? [Z: species] :
-%           ( is_apex_predator(Z)
-%           & food_chain_exists(Y,Z) ) ) ).
-
-% tff(foodllink_food_chain_axiom, axiom,
-%     ! [L: foodlink] : food_chain_exists(eaten(L),eater(L)) ).
-
-%     % ((? [F: foodlink]: (eater(F) = B & eaten(F) = A)) => food_chain_exists(A, B))).
-
-% tff(join_food_chains,axiom,
-%     ! [X: species,Y: species,Z: species] :
-%       ( ( food_chain(X,Y)
-%         & food_chain(Y,Z) )
-%      => food_chain(X,Z) ) ).
 
 tff(complete_food_chain_axiom, axiom,
     ! [A: species]: 
@@ -137,8 +101,7 @@ tff(join_food_chains,axiom,
         & food_chain_exists(Y,Z) )
      => food_chain_exists(X,Z) ) ).
 
-%----Nothing else is a food chain: every food chain starts with a food link,
-%----which is either the whole chain or is followed by the rest of the chain
+%----food chain is either a foodlink or a foodlink to an existing chain
 tff(food_chain_starts_with_link,axiom,
     ! [X: species,Z: species] :
       ( food_chain_exists(X,Z)
@@ -147,9 +110,7 @@ tff(food_chain_starts_with_link,axiom,
             ( eats(Y,X)
             & food_chain_exists(Y,Z) ) ) ) ).
 
-%----Food chains do not go on forever. First order logic cannot say
-%----"finite", so this is said as: a food chain that does not start at a
-%----primary producer can be extended backwards to one ...
+%----Food chains can always be tracked down to a primary poducer
 tff(food_chains_reach_down,axiom,
     ! [X: species,Y: species] :
       ( ( food_chain_exists(X,Y)
@@ -158,8 +119,7 @@ tff(food_chains_reach_down,axiom,
           ( is_primary_producer(W)
           & food_chain_exists(W,X) ) ) ).
 
-%----... and a food chain that does not end at an apex predator can be
-%----extended forwards to one
+%---- a food chain can always be tracked up to an apex
 tff(food_chains_reach_up,axiom,
     ! [X: species,Y: species] :
       ( ( food_chain_exists(X,Y)
@@ -185,9 +145,9 @@ tff(dependent_axiom, axiom,
     (depends_on(A, B) <=> ((is_apex_predator(A) & food_chain_exists(B, A))))).
 
 %---9. Proved
-tff(apex_depends_on_not_apex, conjecture,
-    ! [S: species]:
-    (~is_apex_predator(S) => ? [A: species]: (depends_on(A, S) & is_apex_predator(A)))).
+% tff(apex_depends_on_not_apex, conjecture,
+%     ! [S: species]:
+%     (~is_apex_predator(S) => ? [A: species]: (depends_on(A, S) & is_apex_predator(A)))).
 
 %----10. Proved
 % tff(apex_depends_on_all_primary_producers, conjecture,
@@ -232,6 +192,7 @@ tff(distinct_species_axiom, axiom,
     & frog != heron ) ).
 
 % %----declare food links
+%--- for primary producers, state they dont eat anybody
 tff(algae_eats,axiom,
     ! [S: species] : ~ eats(algae,S) ).
 
@@ -241,6 +202,7 @@ tff(duckweed_eats,axiom,
 tff(pondweed_eats,axiom,
     ! [S: species] : ~ eats(pondweed,S) ).
 
+%---for non-pp, show they eat what is only specified
 tff(zooplankton_eats,axiom,
     ! [S: species] :
       ( eats(zooplankton,S)
@@ -278,16 +240,8 @@ tff(heron_eats,axiom,
     <=> ( S = fish
         | S = frog ) ) ).
 
-% tff(trophic_level_initial_axiom, axiom,
-%     ! [S: species]:
-%     (is_primary_producer(S) => trophic_level(S, 0))
-%     ).
-
-% tff(trophic_level_recursive_axiom, axiom,
-%     ! [S: species]:
-%     ? [P: species]:
-%     (eats(S,P) => ? [L: $int]: (trophic_level(P, L) => trophic_level(S, $sum(L, 1))))
-%     ).
+%---- trophic level is defined one of two ways, either 0 if the species is primary producer
+%--- or if not, follows +1 to one level before
 tff(trophic_level_def,axiom,
     ! [S: species,N: $int] :
       ( trophic_level(S,N)
@@ -305,7 +259,7 @@ tff(trophic_level_def,axiom,
 % tff(algae_primary_producer, conjecture, is_primary_producer(algae)).
 
 %---2
-%---- Not a theorem: there are no species that eat the heron, it is an apex predator
+%---- Not a theorem: there are no species that eat the heron, it is an apex predator. the inverse is proved
 % tff(heron_not_apex, conjecture, ~is_apex_predator(heron)).
 
 %---3
@@ -318,22 +272,26 @@ tff(trophic_level_def,axiom,
 %     ![S:species]: (eats(frog, S) <=> eats(fish, S))).
 
 %----5
-tff(two_complete_food_chains, conjecture,
-    ? [S: species, P: species]:
-    (complete_food_chain(S, heron) & complete_food_chain(P, heron) & S != P)
-    ).
+%----Proved
+% tff(two_complete_food_chains, conjecture,
+%     ? [S: species, P: species]:
+%     (complete_food_chain(S, heron) & complete_food_chain(P, heron) & S != P)
+%     ).
 
 %----6
-%----Not a theorem: snails only depend on duckweed and pondweed
+%----Not a theorem: snails only depend on duckweed and pondweed. Inverse is thm
 % tff(snails_depend_heron, conjecture, depends_on(snail, heron)).
 
 %----7
-tff(fish_snail_trophic_level, conjecture,
-    ?[F: $int, S: $int]:
-    (trophic_level(fish, F) & trophic_level(snail, S) & $greater(F,S))
-    ).
+%----Proved
+% tff(fish_snail_trophic_level, conjecture,
+%     ?[F: $int, S: $int]:
+%     (trophic_level(fish, F) & trophic_level(snail, S) & $greater(F,S))
+%     ).
 
 %----8
+%----Not a theorem: there are no species with greater trophic level than heron
+%----Vampire timed out
 tff(trophic_level_gt_heron, conjecture,
     ? [S: species]:
     ? [L: $int, H: $int]:
